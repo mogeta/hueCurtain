@@ -1,9 +1,9 @@
 package main
 
 import (
+	"github.com/spf13/viper"
+	"fmt"
 	"github.com/amimof/huego"
-	"github.com/BurntSushi/toml"
-	"log"
 )
 
 type Config struct {
@@ -14,15 +14,16 @@ type Config struct {
 
 func main() {
 
-	var config Config
-	_, err := toml.DecodeFile("config.toml", &config)
-	if err != nil {
-		log.Fatal(err)
+	viper.SetConfigName("config")
+	viper.AddConfigPath(".")               // 現在のワーキングディレクトリを探索することもできる
+	err := viper.ReadInConfig()            // 設定ファイルを探索して読み取る
+	if err != nil {                        // 設定ファイルの読み取りエラー対応
+		panic(fmt.Errorf("設定ファイル読み込みエラー: %s \n", err))
 	}
 
 	bridge, _ := huego.Discover()
 	bridge.GetUsers()
-	user := config.User.Name
+	user := viper.GetStringMapString("User")["username"]
 	bridge = bridge.Login(user)
 	light, _ := bridge.GetLight(1)
 	light.On()
