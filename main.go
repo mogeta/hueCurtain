@@ -4,27 +4,52 @@ import (
 	"github.com/spf13/viper"
 	"fmt"
 	"github.com/amimof/huego"
+	"runtime"
 )
 
 type Config struct {
 	User struct {
-		Name string `toml:"username"`
-	}
+		Username string `toml:"username"`
+	} `toml:"User"`
+	Env struct {
+		Start    string `toml:"start"`
+		End      string `toml:"end"`
+		Interval int    `toml:"interval"`
+		Inc      int    `toml:"inc"`
+	} `toml:"Env"`
+}
+
+type HueManager struct {
+	Username         string
+	Briinc           int
+	ColorTemperature uint16
 }
 
 func main() {
 
 	viper.SetConfigName("config")
-	viper.AddConfigPath(".")               // 現在のワーキングディレクトリを探索することもできる
-	err := viper.ReadInConfig()            // 設定ファイルを探索して読み取る
-	if err != nil {                        // 設定ファイルの読み取りエラー対応
+	viper.AddConfigPath(".")
+	err := viper.ReadInConfig()
+	if err != nil {
 		panic(fmt.Errorf("設定ファイル読み込みエラー: %s \n", err))
 	}
 
+	var c Config
+	if err := viper.Unmarshal(&c); err != nil {
+		fmt.Printf("couldn't read config: %s", err)
+	}
+
+	manager := HueManager{c.User.Username, c.Env.Inc, 230}
+	execute(c.Env.Start, c.Env.End, c.Env.Interval, manager.fade)
+	runtime.Goexit()
+}
+
+func (h HueManager) fade() {
 	bridge, _ := huego.Discover()
 	bridge.GetUsers()
-	user := viper.GetStringMapString("User")["username"]
-	bridge = bridge.Login(user)
-	light, _ := bridge.GetLight(1)
-	light.On()
+	bridge = bridge.Login(h.Username)
+	group, _ := bridge.GetGroup(1)
+	s := huego.State{On: true, BriInc: h.Briinc, Ct: h.ColorTemperature}
+	group.SetState(s)
+
 }

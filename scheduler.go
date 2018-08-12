@@ -2,37 +2,28 @@ package main
 
 import (
 	"fmt"
-	"runtime"
-	"time"
-
 	"github.com/carlescere/scheduler"
+	 _ "net/http/pprof"
 )
 
-func main() {
-	job := func() {
-		t := time.Now()
-		fmt.Println("Time's up! @", t.UTC())
-	}
-
-
-	// Run every 2 seconds but not now.
-	scheduler.Every(2).Seconds().NotImmediately().Run(fade)
-
-	//j.Quit <- true
-
-	scheduler.Every().Monday().At("19:00").Run(job)
-	scheduler.Every().Monday().At("23:30").Run(job)
-	// Run now and every X.
-	//scheduler.Every(5).Minutes().Run(job)
-	//scheduler.Every().Day().Run(job)
-	//scheduler.Every().Monday().At("08:30").Run(job)
-
-
-	// Keep the program from not exiting.
-	runtime.Goexit()
+type Curtain struct {
+	startDate string
+	endDate string
+	FadeJob *scheduler.Job
 }
 
-func fade(){
-	t := time.Now()
-	fmt.Println("Time's up! @", t.UTC())
+func execute(start string,end string,interval int,job func()) {
+	curtain := Curtain{startDate: "test",endDate:"test"}
+	fmt.Println(curtain)
+
+	// Run every 2 seconds but not now.
+	curtain.FadeJob, _ = scheduler.Every(interval).Seconds().NotImmediately().Run(job)
+	curtain.FadeJob, _ = scheduler.Every(30).Seconds().NotImmediately().Run(curtain.quit)
+	scheduler.Every().Day().At(start).Run(job)
+	scheduler.Every().Day().At(end).Run(curtain.quit)
+
+}
+
+func (c Curtain)quit(){
+	c.FadeJob.Quit <- true
 }
