@@ -12,14 +12,15 @@ type Curtain struct {
 	FadeJob *scheduler.Job
 }
 
-func execute(start string,end string,interval int,job func()) {
+func execute(start string,end string,interval int,job func(),begin func()) {
 	curtain := Curtain{startDate: "test",endDate:"test"}
 	fmt.Println(curtain)
 
 	// Run every 2 seconds but not now.
 	curtain.FadeJob, _ = scheduler.Every(interval).Seconds().NotImmediately().Run(job)
-	curtain.FadeJob, _ = scheduler.Every(30).Seconds().NotImmediately().Run(curtain.quit)
-	scheduler.Every().Day().At(start).Run(job)
+	//curtain.FadeJob, _ = scheduler.Every(30).Seconds().NotImmediately().Run(curtain.quit)
+
+	scheduler.Every().Day().At(start).Run(begin)
 	scheduler.Every().Day().At(end).Run(curtain.quit)
 
 }

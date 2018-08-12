@@ -40,8 +40,18 @@ func main() {
 	}
 
 	manager := HueManager{c.User.Username, c.Env.Inc, 230}
-	execute(c.Env.Start, c.Env.End, c.Env.Interval, manager.fade)
+	execute(c.Env.Start, c.Env.End, c.Env.Interval, manager.fade,manager.begin)
 	runtime.Goexit()
+}
+
+func (h HueManager) begin() {
+	bridge, _ := huego.Discover()
+	bridge.GetUsers()
+	bridge = bridge.Login(h.Username)
+	group, _ := bridge.GetGroup(1)
+	s := huego.State{On: true, BriInc: 255, Ct: h.ColorTemperature}
+	group.SetState(s)
+
 }
 
 func (h HueManager) fade() {
